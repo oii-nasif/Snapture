@@ -1,0 +1,139 @@
+@import "../shared/base.css";
+
+.page {
+  min-height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--fps-border);
+  position: sticky;
+  top: 0;
+  background: var(--fps-bg);
+  z-index: 1;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.brand img {
+  border-radius: 6px;
+}
+
+.save-indicator {
+  font-size: 12px;
+  color: var(--fps-success);
+  margin: 0;
+  min-height: 16px;
+}
+
+.content {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section h2 {
+  margin: 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fps-text-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.field-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--fps-text-muted);
+}
+
+.hint code {
+  background: var(--fps-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+input[type="range"] {
+  accent-color: var(--fps-primary);
+}
+
+input[type="text"] {
+  padding: 8px 10px;
+  border-radius: var(--fps-radius-sm);
+  border: 1px solid var(--fps-border);
+  background: var(--fps-surface);
+  color: var(--fps-text);
+}
+
+select {
+  padding: 8px 10px;
+  border-radius: var(--fps-radius-sm);
+  border: 1px solid var(--fps-border);
+  background: var(--fps-surface);
+  color: var(--fps-text);
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--fps-border);
+  border-radius: var(--fps-radius-md);
+  padding: 3px;
+  gap: 3px;
+  width: fit-content;
+}
+
+.segmented-option {
+  border: none;
+  background: transparent;
+  padding: 6px 16px;
+  border-radius: var(--fps-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--fps-text-muted);
+}
+
+.segmented-option[aria-pressed="true"] {
+  background: var(--fps-primary);
+  color: var(--fps-primary-text);
+}
+
+.btn-danger {
+  width: fit-content;
+  padding: 8px 16px;
+}

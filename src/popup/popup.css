@@ -1,0 +1,125 @@
+@import "../shared/base.css";
+
+.app {
+  width: 320px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand img {
+  border-radius: 6px;
+}
+
+.brand-name {
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--fps-radius-md);
+  background: var(--fps-surface);
+  border: 1px solid var(--fps-border);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fps-text-muted);
+  flex-shrink: 0;
+}
+
+.status-dot[data-state="idle"] {
+  background: var(--fps-text-muted);
+}
+
+.status-dot[data-state="busy"] {
+  background: var(--fps-primary);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+
+.status-dot[data-state="complete"] {
+  background: var(--fps-success);
+}
+
+.status-dot[data-state="failed"] {
+  background: var(--fps-danger);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.status-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fps-text-muted);
+}
+
+.progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--fps-border);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--fps-primary);
+  transition: width 200ms ease;
+}
+
+.progress-label {
+  font-size: 11.5px;
+  color: var(--fps-text-muted);
+  text-align: right;
+  margin-top: -6px;
+}
+
+.error-banner {
+  padding: 8px 10px;
+  border-radius: var(--fps-radius-sm);
+  background: var(--fps-danger-bg);
+  color: var(--fps-danger);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--fps-border);
+  margin: 2px 0;
+}
+
+.secondary-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

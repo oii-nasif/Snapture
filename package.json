@@ -1,0 +1,32 @@
+{
+  "name": "snapture",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Snapture — full page screenshot capture extension for Chrome and Arc (Manifest V3)",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Nasif Ishtiaque Islam",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oii-nasif/snapture"
+  },
+  "scripts": {
+    "dev": "node scripts/build.mjs --watch",
+    "build": "node scripts/build.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src scripts tests",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "@types/jsdom": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.15.0",
+    "jsdom": "^28.1.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.5"
+  }
+}

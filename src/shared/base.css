@@ -1,0 +1,198 @@
+:root {
+  --fps-bg: #f8fafc;
+  --fps-surface: #ffffff;
+  --fps-surface-raised: #ffffff;
+  --fps-text: #0f172a;
+  --fps-text-muted: #64748b;
+  --fps-border: #e2e8f0;
+  --fps-primary: #6366f1;
+  --fps-primary-hover: #4f46e5;
+  --fps-primary-text: #ffffff;
+  --fps-danger: #ef4444;
+  --fps-danger-bg: #fef2f2;
+  --fps-success: #16a34a;
+  --fps-success-bg: #f0fdf4;
+  --fps-radius-sm: 8px;
+  --fps-radius-md: 12px;
+  --fps-radius-lg: 16px;
+  --fps-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.06);
+  --fps-focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.35);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fps-bg: #0f1117;
+    --fps-surface: #171923;
+    --fps-surface-raised: #1e2130;
+    --fps-text: #f1f5f9;
+    --fps-text-muted: #94a3b8;
+    --fps-border: #2a2e3d;
+    --fps-primary: #818cf8;
+    --fps-primary-hover: #a5b4fc;
+    --fps-primary-text: #0f1117;
+    --fps-danger: #f87171;
+    --fps-danger-bg: #3f1d1d;
+    --fps-success: #4ade80;
+    --fps-success-bg: #143321;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --fps-bg: #0f1117;
+  --fps-surface: #171923;
+  --fps-surface-raised: #1e2130;
+  --fps-text: #f1f5f9;
+  --fps-text-muted: #94a3b8;
+  --fps-border: #2a2e3d;
+  --fps-primary: #818cf8;
+  --fps-primary-hover: #a5b4fc;
+  --fps-primary-text: #0f1117;
+  --fps-danger: #f87171;
+  --fps-danger-bg: #3f1d1d;
+  --fps-success: #4ade80;
+  --fps-success-bg: #143321;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --fps-bg: #f8fafc;
+  --fps-surface: #ffffff;
+  --fps-surface-raised: #ffffff;
+  --fps-text: #0f172a;
+  --fps-text-muted: #64748b;
+  --fps-border: #e2e8f0;
+  --fps-primary: #6366f1;
+  --fps-primary-hover: #4f46e5;
+  --fps-primary-text: #ffffff;
+  --fps-danger: #ef4444;
+  --fps-danger-bg: #fef2f2;
+  --fps-success: #16a34a;
+  --fps-success-bg: #f0fdf4;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fps-bg);
+  color: var(--fps-text);
+  font: 400 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--fps-focus-ring);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: var(--fps-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13.5px;
+  transition: background-color 120ms ease, transform 80ms ease, border-color 120ms ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.btn-primary {
+  background: var(--fps-primary);
+  color: var(--fps-primary-text);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: var(--fps-primary-hover);
+}
+
+.btn-secondary {
+  background: var(--fps-surface-raised);
+  color: var(--fps-text);
+  border-color: var(--fps-border);
+}
+
+.btn-secondary:not(:disabled):hover {
+  border-color: var(--fps-primary);
+  color: var(--fps-primary);
+}
+
+.btn-danger {
+  background: var(--fps-danger-bg);
+  color: var(--fps-danger);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--fps-radius-sm);
+  border: 1px solid var(--fps-border);
+  background: var(--fps-surface-raised);
+  color: var(--fps-text-muted);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  color: var(--fps-primary);
+  border-color: var(--fps-primary);
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--fps-text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+.link-button:hover {
+  color: var(--fps-primary);
+}
+
+.card {
+  background: var(--fps-surface);
+  border: 1px solid var(--fps-border);
+  border-radius: var(--fps-radius-lg);
+  box-shadow: var(--fps-shadow);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Snapture — Settings</title>
+    <link rel="stylesheet" href="../shared/base.css" />
+    <link rel="stylesheet" href="./settings.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="brand">
+          <img src="../icons/icon-32.png" width="20" height="20" alt="" />
+          <span>Settings</span>
+        </div>
+        <p class="save-indicator" id="saveIndicator" role="status" aria-live="polite"></p>
+      </header>
+
+      <main class="content">
+        <section class="card section">
+          <h2>Capture</h2>
+
+          <div class="field">
+            <label for="scrollDelay">Scroll delay — <span id="scrollDelayValue"></span> ms</label>
+            <input type="range" id="scrollDelay" min="100" max="3000" step="50" />
+            <p class="hint">
+              How long to wait after each scroll before capturing, to let the page render. Pages
+              with content that loads over the network as you scroll (embedded cards, dashboards)
+              may need 1000ms+.
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="scrollOverlap">Scroll overlap — <span id="scrollOverlapValue"></span> px</label>
+            <input type="range" id="scrollOverlap" min="0" max="200" step="10" />
+            <p class="hint">Overlap between consecutive captures so no content is missed at the seams.</p>
+          </div>
+
+          <div class="field field-checkbox">
+            <label><input type="checkbox" id="hideSticky" /> Hide sticky/fixed elements during capture</label>
+            <p class="hint">Prevents headers, cookie banners and chat widgets from repeating in the final image.</p>
+          </div>
+
+          <div class="field field-checkbox">
+            <label><input type="checkbox" id="waitForLazy" /> Wait for lazy-loaded content</label>
+            <p class="hint">
+              After the scroll delay, keeps waiting a bit longer if the page's height is still
+              changing (infinite scroll, appended content).
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="maxPageHeight">Maximum page height — <span id="maxPageHeightValue"></span> px</label>
+            <input type="range" id="maxPageHeight" min="5000" max="60000" step="1000" />
+            <p class="hint">Caps runaway captures on infinite-scroll pages.</p>
+          </div>
+
+          <div class="field">
+            <label for="maxDuration">Maximum capture duration — <span id="maxDurationValue"></span> s</label>
+            <input type="range" id="maxDuration" min="10" max="180" step="5" />
+          </div>
+        </section>
+
+        <section class="card section">
+          <h2>Output</h2>
+
+          <div class="field">
+            <label for="outputFormat">Image format</label>
+            <select id="outputFormat">
+              <option value="png">PNG (lossless)</option>
+              <option value="jpeg">JPEG (smaller file size)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="jpegQuality">JPEG quality — <span id="jpegQualityValue"></span>%</label>
+            <input type="range" id="jpegQuality" min="10" max="100" step="5" />
+          </div>
+
+          <div class="field">
+            <label for="filenamePrefix">Filename prefix</label>
+            <input type="text" id="filenamePrefix" maxlength="60" />
+            <p class="hint">Files are saved as <code>prefix-YYYY-MM-DD-HH-mm-ss.png</code>.</p>
+          </div>
+        </section>
+
+        <section class="card section">
+          <h2>History</h2>
+
+          <div class="field field-checkbox">
+            <label><input type="checkbox" id="historyEnabled" /> Keep screenshot history</label>
+          </div>
+
+          <div class="field">
+            <label for="historyLimit">Maximum history items</label>
+            <select id="historyLimit">
+              <option value="10">10 screenshots</option>
+              <option value="25">25 screenshots</option>
+              <option value="50">50 screenshots</option>
+              <option value="100">100 screenshots</option>
+            </select>
+            <p class="hint">The oldest screenshots are removed automatically once this limit is reached.</p>
+          </div>
+
+          <button class="btn btn-danger" id="clearHistoryBtn" type="button">Clear history now</button>
+        </section>
+
+        <section class="card section">
+          <h2>Appearance</h2>
+          <div class="field">
+            <div class="segmented" id="themeSegmented">
+              <button type="button" class="segmented-option" data-value="system">System</button>
+              <button type="button" class="segmented-option" data-value="light">Light</button>
+              <button type="button" class="segmented-option" data-value="dark">Dark</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="./settings.js"></script>
+  </body>
+</html>

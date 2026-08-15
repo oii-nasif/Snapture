@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Snapture — Preview</title>
+    <link rel="stylesheet" href="../shared/base.css" />
+    <link rel="stylesheet" href="./preview.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="brand">
+          <img src="../icons/icon-32.png" width="20" height="20" alt="" />
+          <span>Snapture</span>
+        </div>
+        <button class="link-button" id="historyLink" type="button">Screenshot history</button>
+      </header>
+
+      <main class="content">
+        <section class="viewer card" id="viewer">
+          <div class="viewer-empty" id="emptyState" hidden>
+            <p>This screenshot is no longer available.</p>
+            <button class="btn btn-secondary" id="goToHistory" type="button">View history</button>
+          </div>
+          <div class="viewer-scroll" id="viewerScroll">
+            <img id="screenshotImage" alt="Captured screenshot" />
+          </div>
+        </section>
+
+        <aside class="sidebar">
+          <div class="card meta-card">
+            <h2 class="meta-title" id="pageTitle">—</h2>
+            <a class="meta-url" id="pageUrl" href="#" target="_blank" rel="noopener noreferrer">—</a>
+            <dl class="meta-grid">
+              <div><dt>Dimensions</dt><dd id="dimensions">—</dd></div>
+              <div><dt>File size</dt><dd id="fileSize">—</dd></div>
+              <div><dt>Captured</dt><dd id="capturedAt">—</dd></div>
+              <div><dt>Format</dt><dd id="formatLabel">—</dd></div>
+            </dl>
+          </div>
+
+          <div class="card actions-card">
+            <div class="field-row">
+              <label for="formatSelect">Download as</label>
+              <select id="formatSelect">
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+              </select>
+            </div>
+            <div class="field-row" id="qualityRow" hidden>
+              <label for="qualitySlider">JPEG quality — <span id="qualityValue">90</span>%</label>
+              <input type="range" id="qualitySlider" min="10" max="100" step="5" value="90" />
+            </div>
+
+            <button class="btn btn-primary" id="downloadBtn" type="button">Download</button>
+            <button class="btn btn-secondary" id="copyBtn" type="button">Copy to clipboard</button>
+            <button class="btn btn-secondary" id="recaptureBtn" type="button">Recapture</button>
+            <button class="btn btn-danger" id="deleteBtn" type="button">Delete</button>
+
+            <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+          </div>
+        </aside>
+      </main>
+    </div>
+    <script type="module" src="./preview.js"></script>
+  </body>
+</html>

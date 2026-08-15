@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Snapture",
+  "short_name": "Snapture",
+  "version": "1.0.0",
+  "description": "Capture full-page, visible-area, or selected-area screenshots — stitched, previewed, and saved entirely on your device.",
+  "minimum_chrome_version": "116",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Snapture",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "options_ui": {
+    "page": "settings/settings.html",
+    "open_in_tab": true
+  },
+  "permissions": ["activeTab", "scripting", "storage", "downloads", "clipboardWrite"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "commands": {
+    "capture-full-page": {
+      "suggested_key": { "default": "Alt+Shift+F" },
+      "description": "Capture full page"
+    },
+    "capture-visible": {
+      "suggested_key": { "default": "Alt+Shift+V" },
+      "description": "Capture visible area"
+    },
+    "capture-selection": {
+      "suggested_key": { "default": "Alt+Shift+S" },
+      "description": "Capture selected area"
+    }
+  }
+}
