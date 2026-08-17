@@ -32,9 +32,23 @@
       </header>
 
       <main class="content">
+        <div class="search-row">
+          <input
+            type="search"
+            id="searchInput"
+            placeholder="Search by page text, title, or URL"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <span class="index-status" id="indexStatus" role="status" aria-live="polite"></span>
+        </div>
         <div class="empty-state" id="emptyState" hidden>
           <p>No screenshots yet.</p>
           <p class="muted">Capture a page from the extension popup to see it here.</p>
+        </div>
+        <div class="empty-state" id="noMatchesState" hidden>
+          <p>No screenshots match your search.</p>
+          <p class="muted">Text inside screenshots becomes searchable once indexing finishes.</p>
         </div>
         <div class="history-disabled" id="historyDisabledState" hidden>
           <p>History is turned off.</p>

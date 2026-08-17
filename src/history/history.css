@@ -50,6 +50,33 @@
   padding: 24px;
 }
 
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+#searchInput {
+  flex: 0 1 420px;
+  padding: 9px 12px;
+  border-radius: var(--fps-radius-sm);
+  border: 1px solid var(--fps-border);
+  background: var(--fps-surface);
+  color: var(--fps-text);
+  font-size: 13px;
+}
+
+#searchInput:focus-visible {
+  outline: none;
+  box-shadow: var(--fps-focus-ring);
+}
+
+.index-status {
+  font-size: 12px;
+  color: var(--fps-text-muted);
+}
+
 .empty-state,
 .history-disabled {
   text-align: center;

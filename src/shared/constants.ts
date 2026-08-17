@@ -40,7 +40,8 @@ export const STORAGE_KEYS = {
 
 export const IMAGE_DB_NAME = "snapture-images";
 export const IMAGE_DB_STORE = "images";
-export const IMAGE_DB_VERSION = 1;
+export const IMAGE_DB_OCR_STORE = "ocr-text";
+export const IMAGE_DB_VERSION = 2;
 
 export const RESTRICTED_URL_PREFIXES = [
   "chrome://",
