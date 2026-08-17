@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Copy text (OCR)** on the preview page — recognizes the text in a capture and copies it
+  to the clipboard. Recognition runs fully on-device with a bundled tesseract.js engine
+  (worker, wasm core, and English language data ship inside the extension; no network
+  requests). Results are cached per capture in IndexedDB.
+- **Full-text history search** — a search box on the history page filters captures by page
+  title, URL, and the text recognized inside the screenshot. Captures are indexed lazily in
+  the background with visible progress, and the index is reused by the preview page's
+  Copy text button.
+
+### Changed
+
+- Extension pages now run under a CSP that includes `wasm-unsafe-eval`, required for the
+  on-device OCR wasm core.
+- The image IndexedDB gained an `ocr-text` store (schema v2); deleting a capture removes its
+  recognized text along with the blob.
+
 ## 1.1.0 — 2026-08-17
 
 ### Fixed

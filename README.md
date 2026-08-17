@@ -27,8 +27,15 @@ Works in Chrome and any Chromium-based browser that supports Manifest V3 (includ
   pre-capture state.
 - Preview page with dimensions/file size, download (PNG/JPEG with quality slider),
   copy-to-clipboard, recapture, and delete.
+- **Copy text (OCR)** — extract the text out of any capture straight to the clipboard.
+  Recognition runs entirely on-device via a bundled [tesseract.js](https://github.com/naptha/tesseract.js)
+  engine (worker, wasm core, and English language data all ship inside the extension — no
+  network involved), and results are cached so each screenshot is only recognized once.
 - Screenshot history with thumbnails, stored locally with a configurable size limit
   (10/25/50/100); oldest entries and their image data are pruned automatically.
+- **Full-text history search** — find captures by the text *inside* the screenshot, not just
+  the page title or URL. Captures are OCR-indexed lazily in the background the first time the
+  history page is opened.
 - Settings for capture behavior, output format, history, and light/dark/system theme —
   all auto-saved.
 - Configurable keyboard shortcuts (`Alt+Shift+F` / `Alt+Shift+V` / `Alt+Shift+S`).
@@ -53,6 +60,7 @@ src/
 │   ├── stitch-math.ts               pure stitch/crop planning
 │   └── image-processor.ts           decode/encode/crop/thumbnail/clipboard helpers
 ├── popup/ preview/ settings/ history/   UI surfaces (html + ts + css each)
+├── ocr/                           On-device text recognition (tesseract.js wrapper + text utils)
 ├── shared/                        Types, messaging contracts, storage, constants, theme, utils
 └── icons/                         Generated PNGs (see scripts/generate-icons.mjs)
 
@@ -105,6 +113,12 @@ npm run typecheck  # tsc --noEmit (strict mode)
 `npm run build` bundles each entry point with esbuild and copies static assets into `dist/`.
 The toolbar icons are generated procedurally (`node scripts/generate-icons.mjs`) so the
 repository doesn't depend on binary image assets or an image-processing library.
+
+The first build downloads the Tesseract English language data (~2 MB) into `vendor/ocr/`
+(gitignored) and copies it — together with the tesseract.js worker and wasm core from
+`node_modules` — into `dist/ocr/`, so the packed extension performs OCR without any runtime
+network access. Subsequent builds reuse the cached download; to build fully offline, place
+`eng.traineddata.gz` at `vendor/ocr/` manually.
 
 ## Loading the extension
 
@@ -191,7 +205,7 @@ Default bindings (changeable at `chrome://extensions/shortcuts`):
 
 ## Testing
 
-`npm test` runs **92 unit tests across 7 files** (Vitest; DOM-dependent suites run under jsdom):
+`npm test` runs **110 unit tests across 9 files** (Vitest; DOM-dependent suites run under jsdom):
 
 | File | Covers |
 |---|---|
@@ -202,6 +216,8 @@ Default bindings (changeable at `chrome://extensions/shortcuts`):
 | `scroll-manager.spec.ts` | Window vs. inner-element scrolling, position restore, delay-floor regression. |
 | `selection-manager.spec.ts` | Drag rect normalization, Esc/Enter, toolbar cancel + re-drag, teardown. |
 | `capture-session.spec.ts` | The orchestration loop: cancellation, timeout, live plan growth, no-scroll-progress stop, crop routing, restore-on-error, error propagation. |
+| `search-filter.spec.ts` | History search: query tokenization, AND semantics across title/URL/recognized text. |
+| `text-normalize.spec.ts` | OCR output cleanup: line-ending normalization, blank-line collapsing, trimming. |
 
 Manual test matrix for the built extension in Chrome/Arc:
 
