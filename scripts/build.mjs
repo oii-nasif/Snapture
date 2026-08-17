@@ -4,6 +4,7 @@ import * as esbuild from "esbuild";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { ensureOcrLanguageData } from "./fetch-ocr-assets.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const srcDir = path.join(rootDir, "src");
@@ -49,6 +50,28 @@ async function copyStaticAssets() {
   return files.length;
 }
 
+/** OCR runs fully on-device: the tesseract.js worker, wasm core, and language data all
+ *  ship inside the extension package. corePath is pinned to the SIMD+LSTM build —
+ *  guaranteed available on Chrome ≥116 (the manifest minimum) — so only one core is bundled. */
+const ocrAssets = [
+  ["node_modules/tesseract.js/dist/worker.min.js", "ocr/worker.min.js"],
+  ["node_modules/tesseract.js/dist/worker.min.js.LICENSE.txt", "ocr/worker.min.js.LICENSE.txt"],
+  ["node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js", "ocr/core/tesseract-core-simd-lstm.wasm.js"],
+];
+
+async function copyOcrAssets() {
+  const langFile = await ensureOcrLanguageData(rootDir);
+  const copies = ocrAssets.map(([from, to]) => [path.join(rootDir, from), path.join(distDir, to)]);
+  copies.push([langFile, path.join(distDir, "ocr", "lang", "eng.traineddata.gz")]);
+  await Promise.all(
+    copies.map(async ([from, to]) => {
+      await fs.mkdir(path.dirname(to), { recursive: true });
+      await fs.copyFile(from, to);
+    })
+  );
+  return copies.length;
+}
+
 async function clean() {
   await fs.rm(distDir, { recursive: true, force: true });
   await fs.mkdir(distDir, { recursive: true });
@@ -74,6 +97,8 @@ async function run() {
   await clean();
   const staticCount = await copyStaticAssets();
   console.log(`Copied ${staticCount} static file(s).`);
+  const ocrCount = await copyOcrAssets();
+  console.log(`Copied ${ocrCount} OCR asset(s).`);
 
   if (watch) {
     const contexts = await Promise.all(

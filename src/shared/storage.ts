@@ -1,6 +1,7 @@
 import {
   DEFAULT_SETTINGS,
   IMAGE_DB_NAME,
+  IMAGE_DB_OCR_STORE,
   IMAGE_DB_STORE,
   IMAGE_DB_VERSION,
   STORAGE_KEYS,
@@ -86,6 +87,9 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(IMAGE_DB_STORE)) {
         db.createObjectStore(IMAGE_DB_STORE);
       }
+      if (!db.objectStoreNames.contains(IMAGE_DB_OCR_STORE)) {
+        db.createObjectStore(IMAGE_DB_OCR_STORE);
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error ?? new Error("Failed to open image database"));
@@ -122,9 +126,52 @@ export async function getImageBlob(id: string): Promise<Blob | null> {
 export async function deleteImageBlob(id: string): Promise<void> {
   const db = await openDb();
   await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(IMAGE_DB_STORE, "readwrite");
+    const tx = db.transaction([IMAGE_DB_STORE, IMAGE_DB_OCR_STORE], "readwrite");
     tx.objectStore(IMAGE_DB_STORE).delete(id);
+    tx.objectStore(IMAGE_DB_OCR_STORE).delete(id);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error ?? new Error("Failed to delete image"));
+  });
+}
+
+/** Recognized text is cached per capture so OCR runs at most once per screenshot. */
+export async function saveOcrText(id: string, text: string): Promise<void> {
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(IMAGE_DB_OCR_STORE, "readwrite");
+    tx.objectStore(IMAGE_DB_OCR_STORE).put(text, id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error("Failed to save recognized text"));
+  });
+}
+
+export async function getOcrText(id: string): Promise<string | null> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IMAGE_DB_OCR_STORE, "readonly");
+    const request = tx.objectStore(IMAGE_DB_OCR_STORE).get(id);
+    request.onsuccess = () => resolve(typeof request.result === "string" ? request.result : null);
+    request.onerror = () => reject(request.error ?? new Error("Failed to read recognized text"));
+  });
+}
+
+export async function getAllOcrTexts(): Promise<Map<string, string>> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IMAGE_DB_OCR_STORE, "readonly");
+    const store = tx.objectStore(IMAGE_DB_OCR_STORE);
+    const keysRequest = store.getAllKeys();
+    const valuesRequest = store.getAll();
+    tx.oncomplete = () => {
+      const texts = new Map<string, string>();
+      keysRequest.result.forEach((key, index) => {
+        const value = valuesRequest.result[index];
+        if (typeof key === "string" && typeof value === "string") {
+          texts.set(key, value);
+        }
+      });
+      resolve(texts);
+    };
+    tx.onerror = () => reject(tx.error ?? new Error("Failed to read recognized texts"));
   });
 }
