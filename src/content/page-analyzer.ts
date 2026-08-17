@@ -123,6 +123,17 @@ function nextFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
+/**
+ * Resolves after the browser has committed a fresh paint (two rAF callbacks). Needed after
+ * last-moment style changes (hiding a just-mounted sticky element): `captureVisibleTab` grabs
+ * the last *committed* frame, so a style change made microseconds before the capture request
+ * can otherwise race the compositor and still appear in the screenshot.
+ */
+export async function waitForNextPaint(): Promise<void> {
+  await nextFrame();
+  await nextFrame();
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
