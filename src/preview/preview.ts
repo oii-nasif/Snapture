@@ -1,6 +1,14 @@
 import { copyBlobToClipboard } from "@capture/image-processor";
+import { recognizeText } from "../ocr/ocr-engine";
 import { sendToBackground } from "@shared/messaging";
-import { deleteHistoryEntry, getHistory, getImageBlob, getSettings } from "@shared/storage";
+import {
+  deleteHistoryEntry,
+  getHistory,
+  getImageBlob,
+  getOcrText,
+  getSettings,
+  saveOcrText,
+} from "@shared/storage";
 import { applyTheme } from "@shared/theme";
 import type { CaptureResult, ImageFormat } from "@shared/types";
 import { formatBytes } from "@shared/utilities";
@@ -23,6 +31,7 @@ const qualityValue = document.getElementById("qualityValue") as HTMLSpanElement;
 
 const downloadBtn = document.getElementById("downloadBtn") as HTMLButtonElement;
 const copyBtn = document.getElementById("copyBtn") as HTMLButtonElement;
+const copyTextBtn = document.getElementById("copyTextBtn") as HTMLButtonElement;
 const recaptureBtn = document.getElementById("recaptureBtn") as HTMLButtonElement;
 const deleteBtn = document.getElementById("deleteBtn") as HTMLButtonElement;
 const feedback = document.getElementById("feedback") as HTMLParagraphElement;
@@ -66,7 +75,7 @@ async function findResultMetadata(id: string): Promise<CaptureResult | null> {
 function showEmptyState(): void {
   emptyState.hidden = false;
   viewerScroll.hidden = true;
-  [downloadBtn, copyBtn, recaptureBtn, deleteBtn].forEach((btn) => (btn.disabled = true));
+  [downloadBtn, copyBtn, copyTextBtn, recaptureBtn, deleteBtn].forEach((btn) => (btn.disabled = true));
 }
 
 function setFeedback(message: string, isError = false): void {
@@ -151,6 +160,31 @@ copyBtn.addEventListener("click", async () => {
     setFeedback(error instanceof Error ? error.message : "Clipboard access is not available.", true);
   } finally {
     copyBtn.disabled = false;
+  }
+});
+
+copyTextBtn.addEventListener("click", async () => {
+  if (!currentResult) return;
+  copyTextBtn.disabled = true;
+  setFeedback("Recognizing text…");
+  try {
+    let text = await getOcrText(currentResult.id);
+    if (text === null) {
+      const blob = await getImageBlob(currentResult.id);
+      if (!blob) throw new Error("That screenshot could not be found.");
+      text = await recognizeText(blob);
+      await saveOcrText(currentResult.id, text);
+    }
+    if (!text) {
+      setFeedback("No text was found in this screenshot.");
+    } else {
+      await navigator.clipboard.writeText(text);
+      setFeedback("Text copied to clipboard");
+    }
+  } catch (error) {
+    setFeedback(error instanceof Error ? error.message : "Text recognition failed.", true);
+  } finally {
+    copyTextBtn.disabled = false;
   }
 });
 
