@@ -110,6 +110,7 @@ export interface CaptureResult {
 export type ExtensionErrorCode =
   | "RESTRICTED_PAGE"
   | "UNSUPPORTED_PAGE"
+  | "CAPTURE_IN_PROGRESS"
   | "CAPTURE_TIMEOUT"
   | "CANVAS_LIMIT_EXCEEDED"
   | "CLIPBOARD_UNAVAILABLE"

@@ -49,12 +49,28 @@ export async function deleteHistoryEntry(id: string): Promise<void> {
   const existing = await getHistory();
   await saveHistory(existing.filter((entry) => entry.id !== id));
   await deleteImageBlob(id);
+  await clearSessionPointers([id]);
 }
 
 export async function clearHistory(): Promise<void> {
   const existing = await getHistory();
   await saveHistory([]);
   await Promise.all(existing.map((entry) => deleteImageBlob(entry.id)));
+  await clearSessionPointers(existing.map((entry) => entry.id));
+}
+
+/** Drops session-storage references (popup "copy last", recapture targets) to deleted captures. */
+async function clearSessionPointers(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const stored = await chrome.storage.session.get(["lastCaptureId", "lastTransientId"]);
+  const keysToRemove = ids.map((id) => `sourceTab:${id}`);
+  if (typeof stored.lastCaptureId === "string" && ids.includes(stored.lastCaptureId)) {
+    keysToRemove.push("lastCaptureId", "lastCaptureResult");
+  }
+  if (typeof stored.lastTransientId === "string" && ids.includes(stored.lastTransientId)) {
+    keysToRemove.push("lastTransientId");
+  }
+  await chrome.storage.session.remove(keysToRemove);
 }
 
 /** Full-resolution screenshot bytes live in IndexedDB — chrome.storage.local's ~10MB quota
@@ -63,7 +79,7 @@ let dbPromise: Promise<IDBDatabase> | null = null;
 
 function openDb(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
+  const attempt = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(IMAGE_DB_NAME, IMAGE_DB_VERSION);
     request.onupgradeneeded = () => {
       const db = request.result;
@@ -73,6 +89,12 @@ function openDb(): Promise<IDBDatabase> {
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error ?? new Error("Failed to open image database"));
+  });
+  // A failed open must not be cached, or one transient IndexedDB error would poison
+  // every storage call for the rest of this worker's lifetime.
+  dbPromise = attempt.catch((error: unknown) => {
+    dbPromise = null;
+    throw error;
   });
   return dbPromise;
 }

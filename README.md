@@ -23,6 +23,8 @@ Works in Chrome and any Chromium-based browser that supports Manifest V3 (includ
 - Live progress in the popup (`Ready` → `Preparing…` → `Capturing…` → `Stitching…`); the popup
   closes itself when the capture completes and the preview tab opens. On failure it stays open
   and shows the error.
+- **Cancel** a running capture at any time from the popup — the page is restored to its exact
+  pre-capture state.
 - Preview page with dimensions/file size, download (PNG/JPEG with quality slider),
   copy-to-clipboard, recapture, and delete.
 - Screenshot history with thumbnails, stored locally with a configurable size limit
@@ -82,7 +84,7 @@ document can never hold focus, so routing the write through one reliably fails w
 | `storage` | Save settings and history metadata locally. |
 | `downloads` | Save the finished screenshot to disk. |
 | `clipboardWrite` | Copy a screenshot to the clipboard reliably even though the write happens a few `await`s after the click that triggered it. |
-| `host_permissions` (`http://*/*`, `https://*/*`) | Best-effort enhancement so the **keyboard shortcuts** work without opening the popup first — `activeTab` alone only auto-grants on the special `_execute_action` command, not custom ones. Some browsers/managed profiles restrict broad host permissions (via the per-extension "site access" setting or enterprise policy) independently of what the manifest declares; when that happens the popup-driven flow still works fine via `activeTab`, but the shortcuts may require opening the popup on that tab at least once first. |
+| `host_permissions` (`<all_urls>`) | Required for `chrome.tabs.captureVisibleTab`, which only accepts the literal `<all_urls>` pattern or an `activeTab` grant — granular patterns like `http://*/*` are rejected. This is what lets the **keyboard shortcuts** work without opening the popup first (`activeTab` alone only auto-grants on the special `_execute_action` command, not custom ones) and lets **Recapture** re-shoot the original tab from the preview page, where no user gesture on the source tab exists. Some browsers/managed profiles restrict broad host permissions (via the per-extension "site access" setting or enterprise policy) independently of what the manifest declares; when that happens the popup-driven flow still works fine via `activeTab`, but shortcuts and Recapture may require opening the popup on that tab first. |
 
 No analytics, no remote code, no external network requests — everything happens locally in the
 browser.
@@ -145,12 +147,16 @@ Default bindings (changeable at `chrome://extensions/shortcuts`):
    cropped to that container's on-screen rect before stitching.
 3. **Sticky element handling** (`sticky-element-manager.ts`): small fixed/sticky elements are
    classified as header-like or footer-like relative to the captured region and hidden except in
-   the one frame where they belong, so they don't repeat down the image. Crucially, anything
-   taller than 30% of the capture area — or whose DOM subtree holds tall content — is left
-   alone: apps like Confluence put the *entire content column* inside a sticky-positioned layout
-   wrapper, and hiding that blanks the whole capture. A tall sticky sidebar repeating across
-   frames is an acceptable cost; a blank page is not. Only `visibility` is ever touched (never
-   `display`, so layout can't reflow), and everything is restored afterward.
+   the one frame where they belong, so they don't repeat down the image. The scan reruns before
+   **every** frame (after each scroll's settle wait), not just once up front — apps like
+   Confluence mount floating UI *during* scrolling (cloned sticky table headers, lazy toolbars,
+   chat bubbles), and anything born mid-capture would otherwise repeat at every frame boundary.
+   The walk also descends into open shadow roots, where floating widgets often live. Crucially,
+   anything taller than 30% of the capture area — or whose DOM subtree holds tall content — is
+   left alone: apps like Confluence put the *entire content column* inside a sticky-positioned
+   layout wrapper, and hiding that blanks the whole capture. A tall sticky sidebar repeating
+   across frames is an acceptable cost; a blank page is not. Only `visibility` is ever touched
+   (never `display`, so layout can't reflow), and everything is restored afterward.
 4. `computeScrollSteps` (pure, unit-tested — `src/content/scroll-math.ts`) plans overlapping
    scroll positions from top to bottom.
 5. For each step: scroll → wait. The configured **scroll delay is a hard floor**, not a hint —
@@ -185,7 +191,7 @@ Default bindings (changeable at `chrome://extensions/shortcuts`):
 
 ## Testing
 
-`npm test` runs **82 unit tests across 7 files** (Vitest; DOM-dependent suites run under jsdom):
+`npm test` runs **92 unit tests across 7 files** (Vitest; DOM-dependent suites run under jsdom):
 
 | File | Covers |
 |---|---|

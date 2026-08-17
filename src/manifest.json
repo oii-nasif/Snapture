@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Snapture",
   "short_name": "Snapture",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Capture full-page, visible-area, or selected-area screenshots — stitched, previewed, and saved entirely on your device.",
   "minimum_chrome_version": "116",
   "icons": {
@@ -30,7 +30,7 @@
     "open_in_tab": true
   },
   "permissions": ["activeTab", "scripting", "storage", "downloads", "clipboardWrite"],
-  "host_permissions": ["http://*/*", "https://*/*"],
+  "host_permissions": ["<all_urls>"],
   "commands": {
     "capture-full-page": {
       "suggested_key": { "default": "Alt+Shift+F" },

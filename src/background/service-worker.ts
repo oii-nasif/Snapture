@@ -20,7 +20,7 @@ import {
   saveImageBlob,
 } from "@shared/storage";
 import type { CaptureMode, CaptureProgress, CaptureResult, ExtensionError, ExtensionErrorCode, ImageFormat } from "@shared/types";
-import { formatTimestampForFilename, generateId, isRestrictedUrl } from "@shared/utilities";
+import { blobToDataUrl, formatTimestampForFilename, generateId, isRestrictedUrl } from "@shared/utilities";
 
 interface CaptureState {
   busy: boolean;
@@ -34,8 +34,28 @@ const captureState: CaptureState = {
   progress: { status: "idle", mode: null, current: 0, total: 0, message: "" },
 };
 
-/** Best-effort id → source tab mapping so "Recapture" can re-target the original page. */
-const sourceTabByCaptureId = new Map<string, number>();
+/**
+ * Id → source tab mapping so "Recapture" can re-target the original page. Kept in
+ * chrome.storage.session (not memory) so it survives the service worker being suspended
+ * between the capture and the user clicking "Recapture" in the preview tab.
+ */
+async function rememberSourceTab(captureId: string, tabId: number): Promise<void> {
+  await chrome.storage.session.set({ [`sourceTab:${captureId}`]: tabId });
+}
+
+async function getRememberedSourceTab(captureId: string | undefined): Promise<number | undefined> {
+  if (!captureId) return undefined;
+  const key = `sourceTab:${captureId}`;
+  const stored = await chrome.storage.session.get(key);
+  return typeof stored[key] === "number" ? (stored[key] as number) : undefined;
+}
+
+function busyError(): { ok: false; error: ExtensionError } {
+  return {
+    ok: false,
+    error: { code: "CAPTURE_IN_PROGRESS", message: "A capture is already in progress." },
+  };
+}
 
 chrome.runtime.onMessage.addListener((message: UiRequest, _sender, sendResponse) => {
   handleUiRequest(message)
@@ -65,6 +85,7 @@ function modeForCommand(command: string): CaptureMode | null {
 async function handleUiRequest(message: UiRequest): Promise<UiResult<UiRequest["type"]>> {
   switch (message.type) {
     case "START_CAPTURE":
+      if (captureState.busy) return busyError();
       void startCapture(message.mode);
       return { ok: true, started: true };
 
@@ -79,7 +100,8 @@ async function handleUiRequest(message: UiRequest): Promise<UiResult<UiRequest["
       return downloadCapture(message.id, message.format, message.quality);
 
     case "RECAPTURE":
-      void startCapture(message.mode, sourceTabByCaptureId.get(message.sourceId ?? ""));
+      if (captureState.busy) return busyError();
+      void startCapture(message.mode, await getRememberedSourceTab(message.sourceId));
       return { ok: true, started: true };
 
     default: {
@@ -156,7 +178,7 @@ async function startCapture(mode: CaptureMode, explicitTabId?: number): Promise<
     }
 
     const result = await persistCaptureResult(encoded, tab, mode);
-    if (tab.id !== undefined) sourceTabByCaptureId.set(result.id, tab.id);
+    if (tab.id !== undefined) await rememberSourceTab(result.id, tab.id);
 
     updateProgress({ status: "complete", mode, current: 1, total: 1, message: "Capture complete" });
     broadcast({ type: "CAPTURE_COMPLETE", result });
@@ -266,31 +288,14 @@ async function downloadCapture(
   const extension = targetFormat === "jpeg" ? "jpg" : "png";
   const filename = `${prefix}-${formatTimestampForFilename(Date.now())}.${extension}`;
 
-  const objectUrl = URL.createObjectURL(finalBlob);
+  // URL.createObjectURL does not exist in service workers, so the blob travels as a data URL.
   try {
-    const downloadId = await chrome.downloads.download({ url: objectUrl, filename, saveAs: false });
-    revokeWhenDownloadSettles(downloadId, objectUrl);
+    const dataUrl = await blobToDataUrl(finalBlob);
+    await chrome.downloads.download({ url: dataUrl, filename, saveAs: false });
     return { ok: true, filename };
   } catch (error) {
-    URL.revokeObjectURL(objectUrl);
     return { ok: false, error: { code: "DOWNLOAD_FAILED", message: describeError(error) } };
   }
-}
-
-function revokeWhenDownloadSettles(downloadId: number, objectUrl: string): void {
-  const listener = (delta: chrome.downloads.DownloadDelta) => {
-    if (delta.id !== downloadId) return;
-    if (delta.state?.current === "complete" || delta.state?.current === "interrupted") {
-      URL.revokeObjectURL(objectUrl);
-      chrome.downloads.onChanged.removeListener(listener);
-    }
-  };
-  chrome.downloads.onChanged.addListener(listener);
-  // Safety net in case onChanged never fires (e.g. the download was already finished synchronously).
-  setTimeout(() => {
-    URL.revokeObjectURL(objectUrl);
-    chrome.downloads.onChanged.removeListener(listener);
-  }, 60_000);
 }
 
 function describeError(error: unknown): string {
@@ -313,7 +318,7 @@ function classifyErrorMessage(message: string): ExtensionErrorCode {
   if (lower.includes("did not respond") || lower.includes("receiving end does not exist")) {
     return "CONTENT_SCRIPT_UNREACHABLE";
   }
-  if (lower.includes("too large") || lower.includes("canvas")) return "CANVAS_LIMIT_EXCEEDED";
+  if (lower.includes("too large") || lower.includes("pixel area")) return "CANVAS_LIMIT_EXCEEDED";
   if (lower.includes("max_capture_visible_tab")) return "CAPTURE_RATE_LIMIT";
   if (lower.includes("clipboard")) return "CLIPBOARD_UNAVAILABLE";
   if (lower.includes("download")) return "DOWNLOAD_FAILED";

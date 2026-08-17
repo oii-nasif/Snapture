@@ -38,7 +38,12 @@ export function formatTimestampForFilename(timestamp: number): string {
 
 export function isRestrictedUrl(url: string | undefined): boolean {
   if (!url) return true;
-  return RESTRICTED_URL_PREFIXES.some((prefix) => url.startsWith(prefix)) || url.endsWith(".pdf");
+  if (RESTRICTED_URL_PREFIXES.some((prefix) => url.startsWith(prefix))) return true;
+  try {
+    return new URL(url).pathname.toLowerCase().endsWith(".pdf");
+  } catch {
+    return url.toLowerCase().endsWith(".pdf");
+  }
 }
 
 export async function dataUrlToArrayBuffer(

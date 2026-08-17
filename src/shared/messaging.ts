@@ -60,7 +60,8 @@ export type ContentResponse =
   | { type: "PREPARED"; metrics: PageMetrics }
   | { type: "SCROLL_RESULT"; actualY: number; documentHeight: number }
   | { type: "RESTORED" }
-  | { type: "SELECTION_RESULT"; rect: Rect | null; devicePixelRatio: number };
+  | { type: "SELECTION_RESULT"; rect: Rect | null; devicePixelRatio: number }
+  | { type: "CONTENT_ERROR"; message: string };
 
 /** Fire-and-forget broadcasts from the background worker to any listening UI surface. */
 export type BackgroundBroadcast =
@@ -108,6 +109,10 @@ export function sendToContentScript(
       }
       if (!response) {
         reject(new Error("Content script returned an empty response"));
+        return;
+      }
+      if (response.type === "CONTENT_ERROR") {
+        reject(new Error(response.message));
         return;
       }
       resolve(response);

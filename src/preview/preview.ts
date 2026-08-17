@@ -1,6 +1,6 @@
 import { copyBlobToClipboard } from "@capture/image-processor";
 import { sendToBackground } from "@shared/messaging";
-import { deleteHistoryEntry, deleteImageBlob, getHistory, getImageBlob, getSettings } from "@shared/storage";
+import { deleteHistoryEntry, getHistory, getImageBlob, getSettings } from "@shared/storage";
 import { applyTheme } from "@shared/theme";
 import type { CaptureResult, ImageFormat } from "@shared/types";
 import { formatBytes } from "@shared/utilities";
@@ -164,12 +164,27 @@ recaptureBtn.addEventListener("click", async () => {
 
 deleteBtn.addEventListener("click", async () => {
   if (!currentResult) return;
-  const settings = await getSettings();
-  if (settings.history.enabled) {
+  deleteBtn.disabled = true;
+  try {
     await deleteHistoryEntry(currentResult.id);
-  } else {
-    await deleteImageBlob(currentResult.id);
+  } catch (error) {
+    deleteBtn.disabled = false;
+    setFeedback(error instanceof Error ? error.message : "Failed to delete screenshot.", true);
+    return;
   }
+  currentResult = null;
+  if (objectUrl) {
+    URL.revokeObjectURL(objectUrl);
+    objectUrl = null;
+  }
+  screenshotImage.removeAttribute("src");
+  pageTitleEl.textContent = "—";
+  pageUrlEl.textContent = "—";
+  pageUrlEl.href = "#";
+  dimensionsEl.textContent = "—";
+  fileSizeEl.textContent = "—";
+  capturedAtEl.textContent = "—";
+  formatLabelEl.textContent = "—";
   showEmptyState();
   setFeedback("Screenshot deleted");
 });

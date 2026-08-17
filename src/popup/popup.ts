@@ -10,6 +10,7 @@ const progressTrack = document.getElementById("progressTrack") as HTMLDivElement
 const progressFill = document.getElementById("progressFill") as HTMLDivElement;
 const progressLabel = document.getElementById("progressLabel") as HTMLDivElement;
 const errorBanner = document.getElementById("errorBanner") as HTMLDivElement;
+const cancelCaptureBtn = document.getElementById("cancelCapture") as HTMLButtonElement;
 
 const captureFullPageBtn = document.getElementById("captureFullPage") as HTMLButtonElement;
 const captureVisibleBtn = document.getElementById("captureVisible") as HTMLButtonElement;
@@ -61,6 +62,9 @@ function renderProgress(progress: CaptureProgress): void {
 
   actionButtons.forEach((button) => (button.disabled = busy));
 
+  cancelCaptureBtn.hidden = !busy;
+  if (!busy) cancelCaptureBtn.disabled = false;
+
   if (busy && progress.total > 1) {
     progressTrack.hidden = false;
     progressLabel.hidden = false;
@@ -84,13 +88,25 @@ function showError(message: string): void {
 
 async function refreshCopyLastAvailability(): Promise<void> {
   const { lastCaptureId } = await chrome.storage.session.get("lastCaptureId");
-  copyLastBtn.disabled = typeof lastCaptureId !== "string";
+  if (typeof lastCaptureId !== "string") {
+    copyLastBtn.disabled = true;
+    return;
+  }
+  const blob = await getImageBlob(lastCaptureId).catch(() => null);
+  copyLastBtn.disabled = !blob;
 }
 
 function startCapture(mode: CaptureMode): void {
   errorBanner.hidden = true;
-  void sendToBackground({ type: "START_CAPTURE", mode });
+  void sendToBackground({ type: "START_CAPTURE", mode }).then((result) => {
+    if (!result.ok) showError(result.error.message);
+  });
 }
+
+cancelCaptureBtn.addEventListener("click", () => {
+  cancelCaptureBtn.disabled = true;
+  void sendToBackground({ type: "CANCEL_CAPTURE" });
+});
 
 captureFullPageBtn.addEventListener("click", () => startCapture("full-page"));
 captureVisibleBtn.addEventListener("click", () => startCapture("visible"));

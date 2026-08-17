@@ -1,6 +1,6 @@
 import type { ContentRequest, ContentResponse } from "@shared/messaging";
 import type { PageMetrics } from "@shared/types";
-import { findScrollRoot, getPageMetrics, waitForStableLayout } from "./page-analyzer";
+import { findScrollRoot, getPageMetrics, waitForNextPaint, waitForStableLayout } from "./page-analyzer";
 import { ScrollManager } from "./scroll-manager";
 import { SelectionManager } from "./selection-manager";
 import { StickyElementManager } from "./sticky-element-manager";
@@ -16,7 +16,10 @@ export function initCaptureController(): void {
       .then(sendResponse)
       .catch((error: unknown) => {
         console.error("[Snapture] content script error:", error);
-        sendResponse({ type: "RESTORED" });
+        sendResponse({
+          type: "CONTENT_ERROR",
+          message: error instanceof Error ? error.message : String(error),
+        });
       });
     return true;
   });
@@ -45,7 +48,27 @@ async function handleMessage(message: ContentRequest): Promise<ContentResponse> 
         scrollRoot.rect
       );
       if (message.hideSticky) {
-        stickyManager.freeze(scrollRoot.rect);
+        stickyManager.freeze(scrollRoot.rect, scrollRoot.isDocument ? null : scrollRoot.element);
+
+        // Probe scrolls: JavaScript-pinned elements (cloned sticky table headers, transform-
+        // pinned widgets) only reveal themselves by NOT moving while the page scrolls. Two
+        // quick observation scrolls before any frame is captured let movement-based detection
+        // identify them up front, so they get exactly one legitimate appearance instead of
+        // leaking into the first frame or two. The capture loop's own first SCROLL_TO returns
+        // the page to the top, and RESTORE_PAGE puts the user's position back at the end.
+        const PROBE_DELAY_MS = 220;
+        const MIN_PROBE_DELTA_PX = 40;
+        const maxScroll = scrollRoot.scrollHeight - scrollRoot.rect.height;
+        const step = Math.round(scrollRoot.rect.height * 0.6);
+        if (maxScroll >= MIN_PROBE_DELTA_PX && step > 0) {
+          const firstProbe = await scrollManager.scrollTo(Math.min(step, maxScroll), PROBE_DELAY_MS, false);
+          stickyManager.observe(firstProbe.actualY);
+          const secondTarget = Math.min(firstProbe.actualY + step, maxScroll);
+          if (Math.abs(secondTarget - firstProbe.actualY) >= MIN_PROBE_DELTA_PX) {
+            const secondProbe = await scrollManager.scrollTo(secondTarget, PROBE_DELAY_MS, false);
+            stickyManager.observe(secondProbe.actualY);
+          }
+        }
       }
 
       const fullViewportWidth = window.innerWidth;
@@ -77,6 +100,13 @@ async function handleMessage(message: ContentRequest): Promise<ContentResponse> 
         message.scrollDelayMs,
         message.waitForLazyContent
       );
+      // Re-apply after the settle wait: apps mount floating UI in response to the new scroll
+      // position (cloned sticky table headers, lazy toolbars) — those only exist now, and the
+      // frame is captured immediately after this response is sent. Passing the settled scroll
+      // offset enables movement-based pinned-element detection. Then wait for a committed
+      // paint, or the capture can race the compositor and still show the just-hidden elements.
+      stickyManager.applyForFrame(message.isFirst, message.isLast, result.actualY);
+      await waitForNextPaint();
       return {
         type: "SCROLL_RESULT",
         actualY: result.actualY,
@@ -92,6 +122,9 @@ async function handleMessage(message: ContentRequest): Promise<ContentResponse> 
 
     case "START_SELECTION": {
       const rect = await selectionManager.start();
+      // Wait for a committed paint after the overlay is torn down, or the capture that fires
+      // as soon as this response lands can still show the dimmed backdrop and toolbar.
+      await waitForNextPaint();
       return { type: "SELECTION_RESULT", rect, devicePixelRatio: window.devicePixelRatio || 1 };
     }
 
